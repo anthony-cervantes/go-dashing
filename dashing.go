@@ -28,6 +28,10 @@ func (d *Dashing) Register(jobs ...Job) {
 	d.worker.register(jobs...)
 }
 
+func (d *Dashing) ConfigureCustomRoutes(routes []*CustomRoute){
+	d.server.ConfigureCustomRoutes(routes)
+}
+
 // NewDashing sets up the event broker, workers and webservice.
 func NewDashing(webroot, dashingJSRoot, defaultDashboard, authToken, host, port string, dev bool) (*Dashing, error) {
 	broker := newBroker()

@@ -24,6 +24,12 @@ type serverError struct {
 	InternalError error `json:"error"`
 }
 
+type CustomRoute struct{
+	Path 			string
+	HttpMethod 		string
+	Handler 		gin.HandlerFunc
+}
+
 func (se *serverError) Error() string {
 	return fmt.Sprintf("%d: %s", se.Code, se.InternalError.Error())
 }
@@ -44,6 +50,8 @@ type server struct {
 	defaultDashboard     string
 	authToken            string
 	hostbind             string
+	r					*gin.Engine
+	customRoutes		[]*CustomRoute
 }
 
 func upsertParam(key, value string, c *gin.Context) {
@@ -247,8 +255,19 @@ func (s *server) getAssets(c *gin.Context) {
 	c.Writer.Write(content)
 }
 
-func (s *server) start() error {
-	r := gin.Default()
+func (s *server) ConfigureCustomRoutes(routes []*CustomRoute){
+	s.customRoutes = routes
+}
+
+func (s *server) registerCustomRoutes(){
+	r := s.r
+	for _, route := range s.customRoutes{
+		r.Handle(route.HttpMethod, route.Path, route.Handler)
+	}
+}
+
+func (s *server) registerDefaultRoutes(){
+	r := s.r
 	r.GET("/", s.indexHandler)
 	r.GET("/assets/*any", s.getAssets)
 	r.GET("/events", s.eventsHandler)
@@ -257,7 +276,12 @@ func (s *server) start() error {
 	r.POST("/dashboards/:id", s.dashboardEventHandler)
 	r.GET("/views/:widget", s.widgetHandler)
 	r.POST("/widgets/:id", s.widgetEventHandler)
-	return r.Run(s.hostbind)
+}
+
+func (s *server) start() error {
+	s.registerDefaultRoutes()
+	s.registerCustomRoutes()
+	return s.r.Run(s.hostbind)
 }
 
 func newServer(b *broker, webroot, dashingJSRoot, defaultDashboard, authToken, host, port string) (*server, error) {
@@ -278,6 +302,7 @@ func newServer(b *broker, webroot, dashingJSRoot, defaultDashboard, authToken, h
 		defaultDashboardPath: filepath.Join(webroot, "dashboards", defaultDashboard+".gerb"),
 		authToken:            authToken,
 		hostbind:             host + ":" + port,
+		r: 					  gin.Default(),
 	}, nil
 }
 

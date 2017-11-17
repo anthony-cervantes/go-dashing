@@ -51,6 +51,47 @@ $ go run examples/sample/sample.go
 
 You will need two directories from the Dashing repo: `www` and `javascripts`. We also ship the directories with this repo.
 
+### Define Custom Routes
+
+```go
+package main
+
+import (
+	"log"
+
+	dashing "github.com/znly/go-dashing"
+	"github.com/znly/go-dashing/jobs/buzzwords"
+	"github.com/znly/go-dashing/jobs/convergence"
+	"github.com/znly/go-dashing/jobs/sample"
+	"github.com/gin-gonic/gin"
+)
+
+func sayHiHandler(c *gin.Context) {
+	c.JSON(200, gin.H{"message": "hi there!"})
+}
+
+func main() {
+	// Create a new Dashing server running the sample dashboard
+	dashingDashboards, err := dashing.NewDashing("www/", "javascripts/", "sample", "auth-dev", "127.0.0.1", "5005", false)
+	if err != nil {
+		log.Fatalf("Err: %s", err)
+	}
+
+	//Define custom routes
+	routes := []*dashing.CustomRoute{
+		&dashing.CustomRoute{"/say-hi", "GET",sayHiHandler},
+	}
+	dashingDashboards.ConfigureCustomRoutes(routes)
+
+	// Register default sample jobs
+	dashingDashboards.Register(sample.GetJob(), convergence.GetJob(), buzzwords.GetJob())
+
+	// Start the server
+	log.Fatal(dashingDashboards.Start())
+}
+
+```
+
 ##  WARNING
 
 Go-Dashing is using some native libraries (such as `libsass` and `duktape`), and thus may take some time to compile. Use ```go install``` to avoid recompiling them too often.
