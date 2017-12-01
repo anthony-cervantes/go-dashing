@@ -11,7 +11,7 @@ import (
 
 func main() {
 	// Create a new Dashing server running the sample dashboard
-	dashingDashboards, err := dashing.NewDashing("www/", "javascripts/", "sample", "auth-dev", "127.0.0.1", "5005", false)
+	dashingDashboards, err := dashing.NewDashing("www/", "javascripts/", "sample", "YOUR_AUTH_TOKEN", "127.0.0.1", "5005", false)
 	if err != nil {
 		log.Fatalf("Err: %s", err)
 	}
